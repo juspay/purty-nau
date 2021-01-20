@@ -31,6 +31,11 @@ import "prettyprinter" Data.Text.Prettyprint.Doc
     , vsep
     , (<+>)
     )
+import "base" Data.Maybe (fromJust)
+import "base" Data.Char (ord)
+import "base" Numeric (showHex)
+import "text" Data.Text (Text)
+import qualified "text" Data.Text as Text
 import "purescript" Language.PureScript
     ( Binder(BinaryNoParensBinder, ConstructorBinder, LiteralBinder, NamedBinder, NullBinder, OpBinder, ParensInBinder, PositionedBinder, TypedBinder, VarBinder)
     , CaseAlternative(CaseAlternative, caseAlternativeBinders, caseAlternativeResult)
@@ -63,7 +68,6 @@ import "purescript" Language.PureScript
     , everywhereOnTypesTopDown
     , isImportDecl
     , prettyPrintLabel
-    , prettyPrintString
     , runAssocList
     , runIdent
     , runModuleName
@@ -73,7 +77,7 @@ import "purescript" Language.PureScript
     , showQualified
     )
 import "purescript" Language.PureScript.Names    (Qualified(Qualified))
-import "purescript" Language.PureScript.PSString (PSString, mkString)
+import "purescript" Language.PureScript.PSString (PSString, mkString, decodeString)
 import "rio" RIO.List                            (repeat, zipWith)
 
 import "this" Doc
@@ -425,6 +429,19 @@ fromImportType = \case
     line <> indent 2 ("hiding" <+> fromExports declarationRefs)
   Implicit -> mempty
 
+showPSString :: PSString -> Text
+showPSString psString =
+  Text.pack $ "\"" ++ concatMap escapeChar s ++ "\""
+    where
+      s = Text.unpack (fromJust $ decodeString psString)
+      escapeChar = \case
+        '\n' -> "\\n"
+        '\t' -> "\\t"
+        '\"' -> "\\\""
+        '\\' -> "\\\\"
+        c | ord c < 32 -> "\\x" ++ showHex (ord c) ""
+          | otherwise  -> [c]
+
 fromLiteralBinder :: Literal Binder -> Doc a
 fromLiteralBinder = \case
   ArrayLiteral xs ->
@@ -435,7 +452,7 @@ fromLiteralBinder = \case
   NumericLiteral (Right x) -> pretty x
   ObjectLiteral obj ->
     enclose "{" "}" (hsep $ punctuate comma $ fmap fromObjectBinder obj)
-  StringLiteral str -> pretty (prettyPrintString str)
+  StringLiteral str -> pretty (showPSString str)
 
 fromLiteralExpr :: Literal Expr -> Doc a
 fromLiteralExpr = \case
@@ -445,7 +462,7 @@ fromLiteralExpr = \case
   NumericLiteral (Left x) -> pretty x
   NumericLiteral (Right x) -> pretty x
   ObjectLiteral obj -> braces (fmap fromObjectExpr obj)
-  StringLiteral str -> pretty (prettyPrintString str)
+  StringLiteral str -> pretty (showPSString str)
 
 fromModule :: Module -> Doc a
 fromModule (Module _ comments name declarations' exports) =
@@ -534,7 +551,7 @@ fromType =
     TypeApp f x -> fromType f <+> fromType x
     TypeConstructor constructor ->
       pretty (showQualified runProperName constructor)
-    TypeLevelString str -> pretty (prettyPrintString str)
+    TypeLevelString str -> pretty (showPSString str)
     TypeOp op -> pretty (showQualified runOpName op)
     TypeVar var -> pretty var
     TypeWildcard _ -> "_"
@@ -571,7 +588,7 @@ fromTypeWithParens =
     TypeApp f x -> fromTypeWithParens f <+> fromTypeWithParens x
     TypeConstructor constructor ->
       pretty (showQualified runProperName constructor)
-    TypeLevelString str -> pretty (prettyPrintString str)
+    TypeLevelString str -> pretty (showPSString str)
     TypeOp op -> pretty (showQualified runOpName op)
     TypeVar var -> pretty var
     TypeWildcard _ -> "_"
