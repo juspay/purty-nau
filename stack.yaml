@@ -2,7 +2,12 @@ flags: {}
 packages:
 - .
 extra-deps:
-- dhall-1.14.0
+  #- dhall-1.14.0
+- language-javascript-0.6.0.13 
 - purescript-0.12.0
+- git: "git+ssh://git@bitbucket.org/juspay/happy_1_19_9.git"
+  commit: "0ff11f0622a947a7f073a765080797c59581b361"
+
 - rio-0.1.2.0
-resolver: lts-11.7
+- spdx-0.2.2.0
+resolver: lts-16.12
