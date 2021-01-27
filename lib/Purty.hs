@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 module Purty where
 
 import "rio" RIO
@@ -10,8 +11,8 @@ import "prettyprinter" Data.Text.Prettyprint.Doc
     , layoutSmart
     )
 import "dhall" Dhall
-    ( Inject
-    , Interpret
+    ( FromDhall
+    , ToDhall
     , auto
     , input
     )
@@ -133,9 +134,9 @@ instance Display Config where
       <> display verbosity
       <> "}"
 
-instance Inject Config
+instance FromDhall Config
 
-instance Interpret Config
+instance ToDhall Config
 
 class HasConfig env where
   configL :: Lens' env Config
@@ -152,7 +153,7 @@ parseConfig = \case
           , verbosity = argsVerbosity
           }
       Right contents -> do
-        config <- liftIO (input auto (RIO.Text.Lazy.fromStrict contents))
+        config <- liftIO (input auto contents)
         pure Config
           { formatting = case argsFormatting of
               Static  -> formatting config
@@ -210,9 +211,8 @@ instance Display Formatting where
     Dynamic -> "Dynamic"
     Static -> "Static"
 
-instance Inject Formatting
-
-instance Interpret Formatting
+instance ToDhall Formatting
+instance FromDhall Formatting
 
 parserFormatting :: Parser Formatting
 parserFormatting = flag Static Dynamic meta
@@ -236,9 +236,8 @@ instance Display Verbosity where
     Verbose -> "Verbose"
     NotVerbose -> "Not verbose"
 
-instance Inject Verbosity
-
-instance Interpret Verbosity
+instance ToDhall Verbosity
+instance FromDhall Verbosity
 
 parserVerbosity :: Parser Verbosity
 parserVerbosity = flag NotVerbose Verbose meta
@@ -259,9 +258,8 @@ instance Display Output where
     InPlace -> "Formatting files in-place"
     StdOut -> "Writing formatted files to stdout"
 
-instance Inject Output
-
-instance Interpret Output
+instance FromDhall Output
+instance ToDhall Output
 
 parserOutput :: Parser Output
 parserOutput = flag StdOut InPlace meta
