@@ -4,9 +4,14 @@
     nixpkgs.url = "github:NixOS/nixpkgs/release-20.03";
     utils.url = "github:numtide/flake-utils";
     haskell-nix.url = "github:input-output-hk/haskell.nix";
+    # Will used for shim version tracking
+    flake-compat = {
+      url = "github:edolstra/flake-compat";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, haskell-nix, utils }:
+  outputs = { self, nixpkgs, haskell-nix, utils, ... }:
     let 
       projectName = "purty";
       # Perhaps we should provide a more convinient way to do this?
