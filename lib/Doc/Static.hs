@@ -434,20 +434,26 @@ showPSString psString =
   Text.pack $ "\"" ++ concatMap escapeChar s ++ "\""
     where
       s = Text.unpack (fromJust $ decodeString psString)
-      escapeChar = \case
-        '\n' -> "\\n"
-        '\t' -> "\\t"
-        '\"' -> "\\\""
-        '\\' -> "\\\\"
-        c | ord c < 32 -> "\\x" ++ showHex (ord c) ""
-          | otherwise  -> [c]
+
+showPSChar :: Char -> Text
+showPSChar c =
+  Text.pack $ "'" ++ escapeChar c ++ "'"
+
+escapeChar :: Char -> String
+escapeChar '\n' = "\\n"
+escapeChar '\t' = "\\t"
+escapeChar '\"' = "\\\""
+escapeChar '\\' = "\\\\"
+escapeChar c
+  | ord c < 32 = "\\x" ++ showHex (ord c) ""
+  | otherwise  = [c]
 
 fromLiteralBinder :: Literal Binder -> Doc a
 fromLiteralBinder = \case
   ArrayLiteral xs ->
     enclose "[" "]" (hsep $ punctuate comma $ fmap fromBinder xs)
   BooleanLiteral b -> fromBool b
-  CharLiteral c -> viaShow c
+  CharLiteral c -> pretty (showPSChar c)
   NumericLiteral (Left x) -> pretty x
   NumericLiteral (Right x) -> pretty x
   ObjectLiteral obj ->
@@ -458,7 +464,7 @@ fromLiteralExpr :: Literal Expr -> Doc a
 fromLiteralExpr = \case
   ArrayLiteral xs -> brackets (fmap fromExpr xs)
   BooleanLiteral b -> fromBool b
-  CharLiteral c -> viaShow c
+  CharLiteral c -> pretty (showPSChar c)
   NumericLiteral (Left x) -> pretty x
   NumericLiteral (Right x) -> pretty x
   ObjectLiteral obj -> braces (fmap fromObjectExpr obj)
