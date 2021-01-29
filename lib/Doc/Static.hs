@@ -392,6 +392,7 @@ fromExpr = \case
     fromExpr expr <+> fromPathTree pathTree
   Op _ op -> enclose "(" ")" (pretty $ showQualified runOpName op)
   Parens expr -> parens (fromExpr expr)
+  PositionedValue _ comments c@(Case _ _) -> fromComments comments <> fromExpr c
   PositionedValue _ comments expr -> fromComments' comments <> fromExpr expr
   TypeClassDictionary {} -> mempty
   TypeClassDictionaryAccessor _ _ -> mempty
