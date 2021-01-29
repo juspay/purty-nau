@@ -84,7 +84,8 @@ import "this" Doc
     ( convertForAlls
     , convertTypeApps
     , fromBool
-    , fromComments
+    , fromComments  -- with newline
+    , fromComments' -- without newline
     , fromConstructors
     , fromDataType
     , fromFixity
@@ -231,6 +232,7 @@ fromDeclaration = \case
       <> line
   ImportDeclaration (_, comments) name importType qualified ->
     fromComments comments
+      <> line
       <> "import"
       <+> pretty (runModuleName name)
       <> fromImportType importType
@@ -390,7 +392,7 @@ fromExpr = \case
     fromExpr expr <+> fromPathTree pathTree
   Op _ op -> enclose "(" ")" (pretty $ showQualified runOpName op)
   Parens expr -> parens (fromExpr expr)
-  PositionedValue _ comments expr -> fromComments comments <> fromExpr expr
+  PositionedValue _ comments expr -> fromComments' comments <> fromExpr expr
   TypeClassDictionary {} -> mempty
   TypeClassDictionaryAccessor _ _ -> mempty
   TypeClassDictionaryConstructorApp _ _ -> mempty

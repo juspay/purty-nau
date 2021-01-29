@@ -6,6 +6,7 @@ module Doc
   ( convertForAlls
   , convertTypeApps
   , fromComments
+  , fromComments'
   , fromConstructors
   , fromDataType
   , fromFixity
@@ -84,8 +85,16 @@ fromComment = \case
   BlockComment comment -> enclose "{-" "-}" (pretty comment) <> line
   LineComment comment -> "--" <> pretty comment <> line
 
+fromComment' :: Comment -> Doc a
+fromComment' = \case
+  BlockComment comment -> enclose "{-" "-}" (pretty comment) <> space
+  LineComment comment -> "--" <> pretty comment <> line
+
 fromComments :: (Foldable f) => f Comment -> Doc a
 fromComments = foldMap fromComment
+
+fromComments' :: (Foldable f) => f Comment -> Doc a
+fromComments' = foldMap fromComment'
 
 fromConstructor :: ProperName 'ConstructorName -> Doc a
 fromConstructor = pretty . runProperName
